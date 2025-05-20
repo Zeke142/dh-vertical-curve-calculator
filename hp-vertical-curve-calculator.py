@@ -97,6 +97,11 @@ if curve_length > 0:
         "Elevation (ft)": y_vals
     })
 
+    # Dynamic Y-axis range with 1-ft padding
+    y_min = np.floor(min(y_vals)) - 1
+    y_max = np.ceil(max(y_vals)) + 1
+    y_range = [y_min, y_max]
+
     label_df = pd.DataFrame({
         "Station (ft)": [bvc_station, pvi_station, evc_station, station_input],
         "Elevation (ft)": [bvc_elevation, pvi_elevation, evc_elevation, elevation],
@@ -108,22 +113,22 @@ if curve_length > 0:
         ]
     })
 
-    y_axis = alt.Y("Elevation (ft)", axis=alt.Axis(tickMinStep=1))
-
     line = alt.Chart(df).mark_line(interpolate='monotone', color="#0072B5").encode(
-        x="Station (ft)",
-        y=y_axis,
+        x=alt.X("Station (ft)", axis=alt.Axis(title="Station (ft)")),
+        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
+                axis=alt.Axis(title="Elevation (ft)", tickMinStep=1)),
         tooltip=["Station (ft)", "Elevation (ft)"]
     )
 
     area = alt.Chart(df).mark_area(opacity=0.2, color="#0072B5").encode(
         x="Station (ft)",
-        y=y_axis
+        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
+                axis=alt.Axis(tickMinStep=1))
     )
 
     points = alt.Chart(label_df).mark_point(filled=True, size=100).encode(
         x="Station (ft)",
-        y=y_axis,
+        y="Elevation (ft)",
         color=alt.Color("Label", legend=None),
         tooltip=["Label", "Station (ft)", "Elevation (ft)"]
     )
@@ -132,7 +137,7 @@ if curve_length > 0:
         align="left", baseline="middle", dx=5, dy=-10
     ).encode(
         x="Station (ft)",
-        y=y_axis,
+        y="Elevation (ft)",
         text="Label"
     )
 
@@ -158,4 +163,3 @@ if st.button("Join Waitlist"):
         st.success("You're on the list!")
     else:
         st.error("Please enter a valid email.")
-        
