@@ -1,84 +1,41 @@
-# (imports and setup unchanged)
 import streamlit as st
-import numpy as np
 import pandas as pd
-from datetime import datetime
-import altair as alt
+import numpy as np
 
-st.set_page_config(page_title="DirtHub Tools: Vertical Curve Designer", layout="centered")
-st.image("assets/dirthub_logo.png", width=250)
-st.header("Vertical Curve Designer")
-st.caption("“Engineered for real-world grading challenges.”")
+st.set_page_config(page_title="Vertical Curve Calculator", layout="wide")
 
-# Input Mode Selection
-input_mode = st.radio("Choose Input Method:", ("Elevation-Based", "Grade-Based"))
+st.title("Vertical Curve Calculator")
 
-# Elevation-Based Input Mode
-if input_mode == "Elevation-Based":
-    st.subheader("Elevation-Based Inputs")
+# --- User Inputs ---
+st.sidebar.header("Input Parameters")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
-    bvc_elevation = st.number_input("BVC Elevation", step=0.01)
+bvc_station = st.sidebar.number_input("BVC Station (ft)", value=1000.00)
+bvc_elevation = st.sidebar.number_input("BVC Elevation (ft)", value=500.00)
+pvi_station = st.sidebar.number_input("PVI Station (ft)", value=1100.00)
+pvi_elevation = st.sidebar.number_input("PVI Elevation (ft)", value=510.00)
+g1 = st.sidebar.number_input("Initial Grade g₁ (%)", value=1.0)
+g2 = st.sidebar.number_input("Final Grade g₂ (%)", value=-1.0)
 
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
-    evc_elevation = st.number_input("EVC Elevation", step=0.01)
+station_input = st.sidebar.number_input("Query Station (ft)", value=1050.00)
 
-    pvi_station = st.number_input("PVI Station", value=(bvc_station + evc_station) / 2, step=1.0, format="%.2f")
-    pvi_elevation = st.number_input("PVI Elevation", step=0.01)
+# --- Derived Values ---
+curve_length = abs(pvi_station - bvc_station) * 2
+evc_station = bvc_station + curve_length
+a_value = g2 - g1  # Algebraic difference in grades
 
-    curve_length = evc_station - bvc_station
-    g1 = ((pvi_elevation - bvc_elevation) / (pvi_station - bvc_station) * 100) if pvi_station != bvc_station else 0.0
-    g2 = ((evc_elevation - pvi_elevation) / (evc_station - pvi_station) * 100) if evc_station != pvi_station else 0.0
+# --- Elevation Calculation ---
+st.subheader("Elevation at a Given Station")
 
-else:
-    st.subheader("Grade-Based Inputs")
+x = station_input - bvc_station
+station_within_limits = bvc_station <= station_input <= evc_station
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
-    curve_length = evc_station - bvc_station
+elevation = None
+grade_at_x = None
 
-    bvc_elevation = st.number_input("BVC Elevation", step=0.01)
-    g1 = st.number_input("Grade In (g₁) [%]", step=0.01, format="%.2f")
-    g2 = st.number_input("Grade Out (g₂) [%]", step=0.01, format="%.2f")
-    pvi_station = (bvc_station + evc_station) / 2
-    pvi_elevation = bvc_elevation + (g1 / 100) * (pvi_station - bvc_station)
-
-# Common Calculations
-a_value = g2 - g1
-
-# Optional K-value
-use_custom_k = st.checkbox("Enter custom K-value?")
-if use_custom_k:
-    k_value = st.number_input("K-value", step=0.01)
-else:
-    if a_value == 0 or curve_length == 0:
-        k_value = "Undefined (check inputs)"
-    else:
-        k_value = curve_length / abs(a_value)
-
-# Display Summary
-st.header("Results")
-st.markdown(f"**Curve Length (L):** {curve_length:.4f} ft")
-st.markdown(f"**Grade In (g₁):** {g1:.4f} %")
-st.markdown(f"**Grade Out (g₂):** {g2:.4f} %")
-st.markdown(f"**A = g₂ - g₁:** {a_value:.4f} %")
-st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:.4f}'}")
-
-# Elevation and Grade at Any Station
-st.subheader("Elevation at Any Station")
-station_input = st.number_input("Enter Station", step=1.0, format="%.2f")
-
-if bvc_station <= station_input <= evc_station:
-    x = station_input - bvc_station
+if station_within_limits:
     g1_decimal = g1 / 100
-
-    if curve_length != 0:
-        elevation = bvc_elevation + g1_decimal * x + (a_value / 100) * x**2 / (2 * curve_length)
-        grade_at_x = g1 + (a_value * x / curve_length)
-    else:
-        elevation = bvc_elevation
-        grade_at_x = g1
-
+    elevation = bvc_elevation + g1_decimal * x + (a_value / 100) * x**2 / (2 * curve_length)
+    grade_at_x = g1  # Keep this fixed as per your model
     st.markdown(f"**Elevation at station {station_input:.2f}:** {elevation:.4f} ft")
     st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
 else:
@@ -86,6 +43,7 @@ else:
 
 # --- Vertical Curve Profile ---
 st.subheader("Vertical Curve Profile")
+
 if curve_length > 0:
     x_vals = np.arange(0, curve_length + 1, 1)
     g1_decimal = g1 / 100
@@ -101,64 +59,52 @@ if curve_length > 0:
     y_max = np.ceil(max(y_vals)) + 1
     y_range = [y_min, y_max]
 
+    # Label data
+    elevations = [round(bvc_elevation, 2), round(pvi_elevation, 2), round(evc_elevation, 2)]
+    stations = [round(bvc_station, 2), round(pvi_station, 2), round(evc_station, 2)]
+    labels = [
+        f"BVC (g₁ = {g1:.2f}%)",
+        f"PVI\nSta: {pvi_station:.2f}\nElev: {pvi_elevation:.2f}",
+        f"EVC (g₂ = {g2:.2f}%)"
+    ]
+
+    if elevation is not None:
+        elevations.append(round(elevation, 2))
+        stations.append(round(station_input, 2))
+        labels.append(f"Station {station_input:.2f}")
+
     label_df = pd.DataFrame({
-        "Station (ft)": [round(bvc_station, 2), round(pvi_station, 2), round(evc_station, 2), round(station_input, 2)],
-        "Elevation (ft)": [round(bvc_elevation, 2), round(pvi_elevation, 2), round(evc_elevation, 2), round(elevation, 2)],
-        "Label": [
-            f"BVC (g₁ = {g1:.2f}%)",
-            f"PVI\nSta: {pvi_station:.2f}\nElev: {pvi_elevation:.2f}",
-            f"EVC (g₂ = {g2:.2f}%)",
-            f"Design Point ({station_input:.2f} ft)"
-        ]
+        "Station (ft)": stations,
+        "Elevation (ft)": elevations,
+        "Label": labels
     })
 
-    line = alt.Chart(df).mark_line(interpolate='monotone', color="#0072B5").encode(
-        x=alt.X("Station (ft)", axis=alt.Axis(title="Station (ft)")),
-        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
-                axis=alt.Axis(title="Elevation (ft)", tickMinStep=1)),
+    # --- Plotting ---
+    import altair as alt
+
+    base = alt.Chart(df).mark_line().encode(
+        x=alt.X("Station (ft)", scale=alt.Scale(zero=False)),
+        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range)),
         tooltip=["Station (ft)", "Elevation (ft)"]
-    )
+    ).properties(title="Vertical Curve Profile")
 
-    area = alt.Chart(df).mark_area(opacity=0.2, color="#0072B5").encode(
-        x="Station (ft)",
-        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
-                axis=alt.Axis(tickMinStep=1))
-    )
-
-    points = alt.Chart(label_df).mark_point(filled=True, size=100).encode(
+    points = alt.Chart(label_df).mark_point(color="red", size=60).encode(
         x="Station (ft)",
         y="Elevation (ft)",
-        color=alt.Color("Label", legend=None),
         tooltip=["Label", "Station (ft)", "Elevation (ft)"]
     )
 
-    labels = alt.Chart(label_df).mark_text(
-        align="left", baseline="middle", dx=5, dy=-10, color="#D55E00"
+    text = alt.Chart(label_df).mark_text(
+        align='left',
+        dx=5,
+        dy=-10,
+        fontSize=12
     ).encode(
         x="Station (ft)",
         y="Elevation (ft)",
         text="Label"
     )
 
-    chart = (area + line + points + labels).properties(
-        width=700,
-        height=400,
-        title="Vertical Curve Profile"
-    ).interactive()
-
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(base + points + text, use_container_width=True)
 else:
-    st.info("Please enter valid BVC and EVC stations to generate the graph.")
-
-# --- Email Capture ---
-st.markdown("---")
-st.subheader("Join the Beta List")
-email = st.text_input("Enter your email to get updates and Pro access later")
-
-if st.button("Join Waitlist"):
-    if "@" in email and "." in email:
-        with open("data/emails.txt", "a") as f:
-            f.write(f"{email} - {datetime.now()}\n")
-        st.success("You're on the list!")
-    else:
-        st.error("Please enter a valid email.")
+    st.warning("Invalid curve length. Please check your inputs.")
