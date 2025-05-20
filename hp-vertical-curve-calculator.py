@@ -158,3 +158,4 @@ if st.button("Join Waitlist"):
         st.success("You're on the list!")
     else:
         st.error("Please enter a valid email.")
+        
