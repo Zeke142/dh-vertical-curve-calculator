@@ -1,3 +1,4 @@
+# (imports and setup unchanged)
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -5,8 +6,6 @@ from datetime import datetime
 import altair as alt
 
 st.set_page_config(page_title="DirtHub Tools: Vertical Curve Designer", layout="centered")
-
-# Display logo
 st.image("assets/dirthub_logo.png", width=250)
 st.header("Vertical Curve Designer")
 st.caption("“Engineered for real-world grading challenges.”")
@@ -97,19 +96,19 @@ if curve_length > 0:
         "Elevation (ft)": y_vals
     })
 
-    # Dynamic Y-axis range with 1-ft padding
+    # Dynamic Y-axis range
     y_min = np.floor(min(y_vals)) - 1
     y_max = np.ceil(max(y_vals)) + 1
     y_range = [y_min, y_max]
 
     label_df = pd.DataFrame({
-        "Station (ft)": [bvc_station, pvi_station, evc_station, station_input],
-        "Elevation (ft)": [bvc_elevation, pvi_elevation, evc_elevation, elevation],
+        "Station (ft)": [round(bvc_station, 2), round(pvi_station, 2), round(evc_station, 2), round(station_input, 2)],
+        "Elevation (ft)": [round(bvc_elevation, 2), round(pvi_elevation, 2), round(evc_elevation, 2), round(elevation, 2)],
         "Label": [
             f"BVC (g₁ = {g1:.2f}%)",
-            "PVI",
+            f"PVI\nSta: {pvi_station:.2f}\nElev: {pvi_elevation:.2f}",
             f"EVC (g₂ = {g2:.2f}%)",
-            f"User Point ({station_input:.2f} ft)"
+            f"Design Point ({station_input:.2f} ft)"
         ]
     })
 
@@ -134,7 +133,7 @@ if curve_length > 0:
     )
 
     labels = alt.Chart(label_df).mark_text(
-        align="left", baseline="middle", dx=5, dy=-10
+        align="left", baseline="middle", dx=5, dy=-10, color="#D55E00"
     ).encode(
         x="Station (ft)",
         y="Elevation (ft)",
