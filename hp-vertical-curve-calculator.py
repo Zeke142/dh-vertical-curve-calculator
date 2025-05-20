@@ -8,6 +8,7 @@ st.set_page_config(page_title="DirtHub Tools: Vertical Curve Designer", layout="
 
 # Display logo
 st.image("assets/dirthub_logo.png", width=250)
+st.markdown("<h2 style='text-align: center;'>Vertical Curve Designer</h2>", unsafe_allow_html=True)
 st.caption("“Engineered for real-world grading challenges.”")
 
 # Input Mode Selection
