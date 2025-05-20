@@ -134,11 +134,19 @@ if curve_length > 0:
         text="Label"
     )
 
-    chart = (area + line + points + labels).properties(
-        width=700,
-        height=400,
-        title="Vertical Curve Profile"
-    ).interactive()
+    # Calculate y-axis ticks (elevation ticks at 1-ft intervals)
+y_min = np.floor(np.min(y_vals))
+y_max = np.ceil(np.max(y_vals))
+y_ticks = list(np.arange(y_min, y_max + 1, 1))  # 1-ft increments
+
+# Create the chart with customized y-axis
+chart = (area + line + point + text_labels).properties(
+    width=700,
+    height=400,
+    title="Vertical Curve Profile"
+).configure_axisY(
+    values=y_ticks
+).interactive()
 
     st.altair_chart(chart, use_container_width=True)
 else:
