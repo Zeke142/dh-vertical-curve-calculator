@@ -1,3 +1,4 @@
+
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -8,7 +9,6 @@ st.set_page_config(page_title="DirtHub Tools: Vertical Curve Designer", layout="
 
 # Display logo
 st.image("assets/dirthub_logo.png", width=250)
-st.markdown("<h2 style='text-align: center;'>Vertical Curve Designer</h2>", unsafe_allow_html=True)
 st.caption("“Engineered for real-world grading challenges.”")
 
 # Input Mode Selection
@@ -134,19 +134,11 @@ if curve_length > 0:
         text="Label"
     )
 
-    # Calculate y-axis ticks (elevation ticks at 1-ft intervals)
-y_min = np.floor(np.min(y_vals))
-y_max = np.ceil(np.max(y_vals))
-y_ticks = list(np.arange(y_min, y_max + 1, 1))  # 1-ft increments
-
-# Create the chart with customized y-axis
-chart = (area + line + point + text_labels).properties(
-    width=700,
-    height=400,
-    title="Vertical Curve Profile"
-).configure_axisY(
-    values=y_ticks
-).interactive()
+    chart = (area + line + points + labels).properties(
+        width=700,
+        height=400,
+        title="Vertical Curve Profile"
+    ).interactive()
 
     st.altair_chart(chart, use_container_width=True)
 else:
