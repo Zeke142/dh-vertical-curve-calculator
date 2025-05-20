@@ -108,20 +108,22 @@ if curve_length > 0:
         ]
     })
 
+    y_axis = alt.Y("Elevation (ft)", axis=alt.Axis(tickMinStep=1))
+
     line = alt.Chart(df).mark_line(interpolate='monotone', color="#0072B5").encode(
         x="Station (ft)",
-        y="Elevation (ft)",
+        y=y_axis,
         tooltip=["Station (ft)", "Elevation (ft)"]
     )
 
     area = alt.Chart(df).mark_area(opacity=0.2, color="#0072B5").encode(
         x="Station (ft)",
-        y="Elevation (ft)"
+        y=y_axis
     )
 
     points = alt.Chart(label_df).mark_point(filled=True, size=100).encode(
         x="Station (ft)",
-        y="Elevation (ft)",
+        y=y_axis,
         color=alt.Color("Label", legend=None),
         tooltip=["Label", "Station (ft)", "Elevation (ft)"]
     )
@@ -130,7 +132,7 @@ if curve_length > 0:
         align="left", baseline="middle", dx=5, dy=-10
     ).encode(
         x="Station (ft)",
-        y="Elevation (ft)",
+        y=y_axis,
         text="Label"
     )
 
