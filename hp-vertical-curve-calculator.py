@@ -18,10 +18,10 @@ input_mode = st.radio("Choose Input Method:", ("Elevation-Based", "Grade-Based")
 if input_mode == "Elevation-Based":
     st.subheader("Elevation-Based Inputs")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f", value=100.0)
+    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
     bvc_elevation = st.number_input("BVC Elevation", step=0.01)
 
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f", value=200.0)
+    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
     evc_elevation = st.number_input("EVC Elevation", step=0.01)
 
     pvi_station = st.number_input("PVI Station", value=(bvc_station + evc_station) / 2, step=1.0, format="%.2f")
@@ -34,8 +34,8 @@ if input_mode == "Elevation-Based":
 else:
     st.subheader("Grade-Based Inputs")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f", value=100.0)
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f", value=200.0)
+    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
+    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
     curve_length = evc_station - bvc_station
 
     bvc_elevation = st.number_input("BVC Elevation", step=0.01)
@@ -65,20 +65,11 @@ st.markdown(f"**Grade Out (g₂):** {g2:.4f} %")
 st.markdown(f"**A = g₂ - g₁:** {a_value:.4f} %")
 st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:.4f}'}")
 
-# Elevation and Grade at Any Station - now with slider
+# Elevation and Grade at Any Station
 st.subheader("Elevation at Any Station")
-st.markdown(f"BVC Station: {bvc_station:.2f} | EVC Station: {evc_station:.2f}")
+station_input = st.number_input("Enter Station", step=1.0, format="%.2f")
 
-if bvc_station < evc_station:
-    station_input = st.slider(
-        "Select Station",
-        min_value=float(bvc_station),
-        max_value=float(evc_station),
-        value=float((bvc_station + evc_station) / 2),
-        step=1.0,
-        format="%.2f"
-    )
-
+if bvc_station <= station_input <= evc_station:
     x = station_input - bvc_station
     g1_decimal = g1 / 100
 
@@ -92,11 +83,10 @@ if bvc_station < evc_station:
     st.markdown(f"**Elevation at station {station_input:.2f}:** {elevation:.4f} ft")
     st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
 else:
-    st.warning("Station range is invalid. Make sure EVC > BVC.")
+    st.warning("Station is outside the limits of the vertical curve.")
 
 # --- Vertical Curve Profile ---
 st.subheader("Vertical Curve Profile")
-
 if curve_length > 0:
     x_vals = np.arange(0, curve_length + 1, 1)
     g1_decimal = g1 / 100
@@ -107,6 +97,7 @@ if curve_length > 0:
         "Elevation (ft)": y_vals
     })
 
+    # Dynamic Y-axis range with 1-ft padding
     y_min = np.floor(min(y_vals)) - 1
     y_max = np.ceil(max(y_vals)) + 1
     y_range = [y_min, y_max]
@@ -131,7 +122,8 @@ if curve_length > 0:
 
     area = alt.Chart(df).mark_area(opacity=0.2, color="#0072B5").encode(
         x="Station (ft)",
-        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range))
+        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
+                axis=alt.Axis(tickMinStep=1))
     )
 
     points = alt.Chart(label_df).mark_point(filled=True, size=100).encode(
@@ -142,27 +134,17 @@ if curve_length > 0:
     )
 
     labels = alt.Chart(label_df).mark_text(
-        align="left", baseline="middle", dx=6, dy=-12, fontSize=11, fontWeight="bold"
+        align="left", baseline="middle", dx=5, dy=-10
     ).encode(
         x="Station (ft)",
         y="Elevation (ft)",
         text="Label"
     )
 
-    chart = (area + line + points + labels).configure_axis(
-        grid=True,
-        gridOpacity=0.3,
-        tickBand='extent',
-        labelFontSize=12,
-        titleFontSize=14
-    ).properties(
+    chart = (area + line + points + labels).properties(
         width=700,
         height=400,
-        title=alt.TitleParams(
-            text="Vertical Curve Profile",
-            fontSize=16,
-            fontWeight='bold'
-        )
+        title="Vertical Curve Profile"
     ).interactive()
 
     st.altair_chart(chart, use_container_width=True)
