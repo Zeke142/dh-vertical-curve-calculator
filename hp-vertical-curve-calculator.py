@@ -18,10 +18,10 @@ input_mode = st.radio("Choose Input Method:", ("Elevation-Based", "Grade-Based")
 if input_mode == "Elevation-Based":
     st.subheader("Elevation-Based Inputs")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
+    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f", value=100.0)
     bvc_elevation = st.number_input("BVC Elevation", step=0.01)
 
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
+    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f", value=200.0)
     evc_elevation = st.number_input("EVC Elevation", step=0.01)
 
     pvi_station = st.number_input("PVI Station", value=(bvc_station + evc_station) / 2, step=1.0, format="%.2f")
@@ -34,8 +34,8 @@ if input_mode == "Elevation-Based":
 else:
     st.subheader("Grade-Based Inputs")
 
-    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f")
-    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f")
+    bvc_station = st.number_input("BVC Station", step=1.0, format="%.2f", value=100.0)
+    evc_station = st.number_input("EVC Station", step=1.0, format="%.2f", value=200.0)
     curve_length = evc_station - bvc_station
 
     bvc_elevation = st.number_input("BVC Elevation", step=0.01)
@@ -67,6 +67,7 @@ st.markdown(f"**K-value:** {k_value if isinstance(k_value, str) else f'{k_value:
 
 # Elevation and Grade at Any Station - now with slider
 st.subheader("Elevation at Any Station")
+st.markdown(f"BVC Station: {bvc_station:.2f} | EVC Station: {evc_station:.2f}")
 
 if bvc_station < evc_station:
     station_input = st.slider(
@@ -91,7 +92,7 @@ if bvc_station < evc_station:
     st.markdown(f"**Elevation at station {station_input:.2f}:** {elevation:.4f} ft")
     st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
 else:
-    st.warning("Please enter valid BVC and EVC stations.")
+    st.warning("Station range is invalid. Make sure EVC > BVC.")
 
 # --- Vertical Curve Profile ---
 st.subheader("Vertical Curve Profile")
