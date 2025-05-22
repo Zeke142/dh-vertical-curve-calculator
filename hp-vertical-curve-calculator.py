@@ -134,12 +134,12 @@ if curve_length > 0:
     )
 
     labels = alt.Chart(label_df).mark_text(
-        align="left", baseline="middle", dx=5, dy=-10
-    ).encode(
-        x="Station (ft)",
-        y="Elevation (ft)",
-        text="Label"
-    )
+    align="left", baseline="middle", dx=5, dy=-10, color='white'
+).encode(
+    x="Station (ft)",
+    y="Elevation (ft)",
+    text="Label"
+)
 
     chart = (area + line + points + labels).properties(
         width=700,
