@@ -113,6 +113,17 @@ label_points = [
     ("EVC", evc_station, evc_elevation)
 ]
 
+def format_station(station):
+    ft = int(station)
+    return f"{ft//100}+{ft%100:02d}"
+
+label_points = [
+    ("BVC", bvc_station, bvc_elevation),
+    ("PVI", pvi_station, pvi_elevation),
+    ("Design Point", station_input, elevation),
+    ("EVC", evc_station, evc_elevation)
+]
+
 label_df = pd.DataFrame({
     "Station (ft)": [s for _, s, _ in label_points],
     "Elevation (ft)": [e for _, _, e in label_points],
