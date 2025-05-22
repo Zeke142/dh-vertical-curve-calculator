@@ -88,7 +88,7 @@ else:
 # --- Vertical Curve Profile ---
 st.subheader("Vertical Curve Profile")
 if curve_length > 0:
-    x_vals = np.orange(0, curve_length + 1, 1)
+    x_vals = np.arange(0, curve_length + 1, 1)
     g1_decimal = g1 / 100
     y_vals = bvc_elevation + g1_decimal * x_vals + (a_value / 100) * x_vals**2 / (2 * curve_length)
 
