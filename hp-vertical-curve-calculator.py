@@ -97,7 +97,6 @@ if curve_length > 0:
         "Elevation (ft)": y_vals
     })
 
-    # Dynamic Y-axis range with 1-ft padding
     y_min = np.floor(min(y_vals)) - 1
     y_max = np.ceil(max(y_vals)) + 1
     y_range = [y_min, y_max]
@@ -112,60 +111,73 @@ if curve_length > 0:
         ("EVC", evc_station, evc_elevation)
     ]
 
-    label_df = pd.DataFrame({
-        "Station (ft)": [s for _, s, _ in label_points],
-        "Elevation (ft)": [e for _, _, e in label_points],
-        "Label": [
-            f"{name}\n{format_station(station)}\nEl: {elevation:.2f}"
-            for name, station, elevation in label_points
-        ]
+    design_point = ("Design Point", station_input, elevation)
+
+    base_labels = pd.DataFrame({
+        "Name": [p[0] for p in label_points],
+        "Station (ft)": [p[1] for p in label_points],
+        "Elevation (ft)": [p[2] for p in label_points],
     })
 
-    design_label_df = pd.DataFrame({
-        "Station (ft)": [station_input],
-        "Elevation (ft)": [y_min + 1],
-        "Label": [f"Design Point\n{format_station(station_input)}\nEl: {elevation:.2f}"]
+    design_df = pd.DataFrame({
+        "Name": [design_point[0]],
+        "Station (ft)": [design_point[1]],
+        "Elevation (ft)": [y_min + 1],  # offset for visibility
+        "Actual Elevation": [design_point[2]]
     })
+
+    # Layered text labels
+    def create_label_layer(df, text_col, dy, color):
+        return alt.Chart(df).mark_text(
+            align="left", baseline="middle", dx=5, dy=dy, color=color, fontWeight='bold'
+        ).encode(
+            x="Station (ft)",
+            y="Elevation (ft)",
+            text=text_col
+        )
+
+    # Split label content
+    base_labels["label_name"] = base_labels["Name"]
+    base_labels["label_station"] = base_labels["Station (ft)"].apply(format_station)
+    base_labels["label_elevation"] = base_labels["Elevation (ft)"].apply(lambda e: f"El: {e:.2f}")
+
+    design_df["label_name"] = design_df["Name"]
+    design_df["label_station"] = design_df["Station (ft)"].apply(format_station)
+    design_df["label_elevation"] = design_df["Actual Elevation"].apply(lambda e: f"El: {e:.2f}")
+
+    # Combine all text layers
+    name_labels = create_label_layer(base_labels, "label_name", dy=-20, color="#7DC9FF")
+    station_labels = create_label_layer(base_labels, "label_station", dy=-5, color="#FF6B00")
+    elevation_labels = create_label_layer(base_labels, "label_elevation", dy=10, color="#FFFFFF")
+
+    design_name = create_label_layer(design_df, "label_name", dy=-20, color="#7DC9FF")
+    design_station = create_label_layer(design_df, "label_station", dy=-5, color="#FF6B00")
+    design_elevation = create_label_layer(design_df, "label_elevation", dy=10, color="#FFFFFF")
+
+    point_df = pd.concat([base_labels[["Station (ft)", "Elevation (ft)", "Name"]],
+                          design_df[["Station (ft)", "Elevation (ft)", "Name"]]])
+    points = alt.Chart(point_df).mark_point(filled=True, size=100).encode(
+        x="Station (ft)",
+        y="Elevation (ft)",
+        color=alt.Color("Name", legend=None),
+        tooltip=["Name", "Station (ft)", "Elevation (ft)"]
+    )
 
     line = alt.Chart(df).mark_line(interpolate='monotone', color="#0072B5").encode(
-        x=alt.X("Station (ft)", axis=alt.Axis(title="Station (ft)")),
+        x="Station (ft)",
         y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
-                axis=alt.Axis(title="Elevation (ft)", tickMinStep=1)),
-        tooltip=["Station (ft)", "Elevation (ft)"]
+                axis=alt.Axis(title="Elevation (ft)", tickMinStep=1))
     )
 
     area = alt.Chart(df).mark_area(opacity=0.2, color="#0072B5").encode(
         x="Station (ft)",
-        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range),
-                axis=alt.Axis(tickMinStep=1))
+        y=alt.Y("Elevation (ft)", scale=alt.Scale(domain=y_range))
     )
 
-    points = alt.Chart(pd.concat([label_df, design_label_df])).mark_point(filled=True, size=100).encode(
-        x="Station (ft)",
-        y="Elevation (ft)",
-        color=alt.Color("Label", legend=None),
-        tooltip=["Label", "Station (ft)", "Elevation (ft)"]
-    )
-
-    labels = alt.Chart(label_df).mark_text(
-        align="left", baseline="middle", dx=5, dy=-10,
-        color='white', fontWeight='bold'
-    ).encode(
-        x="Station (ft)",
-        y="Elevation (ft)",
-        text="Label"
-    )
-
-    design_label = alt.Chart(design_label_df).mark_text(
-        align="left", baseline="top", dx=5, dy=5,
-        color='white', fontWeight='bold'
-    ).encode(
-        x="Station (ft)",
-        y="Elevation (ft)",
-        text="Label"
-    )
-
-    chart = (area + line + points + labels + design_label).properties(
+    chart = (area + line + points +
+             name_labels + station_labels + elevation_labels +
+             design_name + design_station + design_elevation
+             ).properties(
         width=700,
         height=400,
         title="Vertical Curve Profile"
