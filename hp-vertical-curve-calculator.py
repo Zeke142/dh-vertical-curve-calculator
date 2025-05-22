@@ -106,10 +106,10 @@ if curve_length > 0:
         ft = int(station)
         return f"{ft//100}+{ft%100:02d}"
 
+    # All points except Design Point
     label_points = [
         ("BVC", bvc_station, bvc_elevation),
         ("PVI", pvi_station, pvi_elevation),
-        ("Design Point", station_input, elevation),
         ("EVC", evc_station, evc_elevation)
     ]
 
@@ -120,6 +120,13 @@ if curve_length > 0:
             f"{name}\n{format_station(station)}\n{elevation:.2f}"
             for name, station, elevation in label_points
         ]
+    })
+
+    # Design Point label pinned near bottom for mobile visibility
+    design_label_df = pd.DataFrame({
+        "Station (ft)": [station_input],
+        "Elevation (ft)": [y_min + 1],
+        "Label": [f"Design Point\n{format_station(station_input)}\n{elevation:.2f}"]
     })
 
     line = alt.Chart(df).mark_line(interpolate='monotone', color="#0072B5").encode(
@@ -135,7 +142,7 @@ if curve_length > 0:
                 axis=alt.Axis(tickMinStep=1))
     )
 
-    points = alt.Chart(label_df).mark_point(filled=True, size=100).encode(
+    points = alt.Chart(pd.concat([label_df, design_label_df])).mark_point(filled=True, size=100).encode(
         x="Station (ft)",
         y="Elevation (ft)",
         color=alt.Color("Label", legend=None),
@@ -150,7 +157,15 @@ if curve_length > 0:
         text="Label"
     )
 
-    chart = (area + line + points + labels).properties(
+    design_label = alt.Chart(design_label_df).mark_text(
+        align="left", baseline="top", dx=5, dy=5, color='white'
+    ).encode(
+        x="Station (ft)",
+        y="Elevation (ft)",
+        text="Label"
+    )
+
+    chart = (area + line + points + labels + design_label).properties(
         width=700,
         height=400,
         title="Vertical Curve Profile"
