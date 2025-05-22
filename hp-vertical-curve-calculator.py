@@ -102,36 +102,16 @@ if curve_length > 0:
     y_max = np.ceil(max(y_vals)) + 1
     y_range = [y_min, y_max]
 
-    def format_station(station):
-    ft = int(station)
-    return f"{ft//100}+{ft%100:02d}"
-
-label_points = [
-    ("BVC", bvc_station, bvc_elevation),
-    ("PVI", pvi_station, pvi_elevation),
-    ("Design Point", station_input, elevation),
-    ("EVC", evc_station, evc_elevation)
-]
-
-def format_station(station):
-    ft = int(station)
-    return f"{ft//100}+{ft%100:02d}"
-
-label_points = [
-    ("BVC", bvc_station, bvc_elevation),
-    ("PVI", pvi_station, pvi_elevation),
-    ("Design Point", station_input, elevation),
-    ("EVC", evc_station, evc_elevation)
-]
-
-label_df = pd.DataFrame({
-    "Station (ft)": [s for _, s, _ in label_points],
-    "Elevation (ft)": [e for _, _, e in label_points],
-    "Label": [
-        f"{name}\n{format_station(station)}\n{elevation:.2f}"
-        for name, station, elevation in label_points
-    ]
-})
+    label_df = pd.DataFrame({
+        "Station (ft)": [bvc_station, pvi_station, evc_station, station_input],
+        "Elevation (ft)": [bvc_elevation, pvi_elevation, evc_elevation, elevation],
+        "Label": [
+            f"BVC (g₁ = {g1:.2f}%)",
+            "PVI",
+            f"EVC (g₂ = {g2:.2f}%)",
+            f"User Point ({station_input:.2f} ft)"
+        ]
+    })
 
     line = alt.Chart(df).mark_line(interpolate='monotone', color="#0072B5").encode(
         x=alt.X("Station (ft)", axis=alt.Axis(title="Station (ft)")),
