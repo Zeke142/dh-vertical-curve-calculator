@@ -1,8 +1,8 @@
 [theme]
+hideMenu = false
 base="dark"
 primaryColor="#39FF14"
 backgroundColor="#4E342E"
 secondaryBackgroundColor="#1a1a1a"
 textColor="#FF9800"
 font="sans serif"
-
