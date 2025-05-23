@@ -80,8 +80,12 @@ if bvc_station <= station_input <= evc_station:
         elevation = bvc_elevation
         grade_at_x = g1
 
-    st.markdown(f"**Elevation at station {station_input:.2f}:** {elevation:.4f} ft")
-    st.markdown(f"**Grade at station {station_input:.2f}:** {grade_at_x:.4f} %")
+    if st.button("Calculate Elevation and Grade"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="Elevation", value=f"{elevation:.4f} ft")
+        with col2:
+            st.metric(label="Grade at Station", value=f"{grade_at_x:.4f} %")
 else:
     st.warning("Station is outside the limits of the vertical curve.")
 
