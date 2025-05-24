@@ -1,1 +1,1 @@
-run = "streamlit run dh-vertical-curve-calculator.py"
+run = "streamlit run hp-vertical-curve-calculator.py"
