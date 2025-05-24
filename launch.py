@@ -1,2 +1,2 @@
 import streamlit.web.bootstrap
-streamlit.web.bootstrap.run('hp-vertical-curve-calculator.py', '', [], {})
+streamlit.web.bootstrap.run('dh-vertical-curve-calculator.py', '', [], {})
