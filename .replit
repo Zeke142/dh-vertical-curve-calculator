@@ -1,1 +1,1 @@
-run = "python3 launch.py"
+run = "streamlit run hp-vertical-curve-calculator.py"
